@@ -6,7 +6,11 @@
   "types": "dist/types/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "setup-hooks": "cp .pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
+  },
+  "dependencies": {
+    "@jsonms/js": "^1.0.0"
   },
   "devDependencies": {
     "typescript": "^4.5.0",
@@ -15,7 +19,6 @@
     "vue-router": "^4.5.0"
   },
   "peerDependencies": {
-    "vue": "^3.0.0",
-    "@jsonms/js": "^1.0.0"
+    "vue": "^3.0.0"
   }
 }

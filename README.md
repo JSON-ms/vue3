@@ -23,12 +23,14 @@ yarn add @jsonms/vue3
 Create a file `jsonms.ts` in `/src/plugins`. Make sure to export your typings from your JSON.ms project first (See Typings under your username in JSON.ms toolbar).
 
 ```ts
-import JsonMs from '@jsonms/vue3'
+import JsonMs, { type JSONmsProvider } from '@jsonms/vue3'
+import defaultJmsObject, { type JmsLocale, type JmsObject } from '@/interfaces'; // Your exported typings here
 import { inject } from 'vue';
-import { type JmsLocale, type JmsObject, defaultJmsObject } from '@/interfaces'; // Your exported typings here
-import { type JSONmsProvider } from '@jsonms/vue3';
 
-export default JsonMs<JmsObject, JmsLocale>(defaultJmsObject)
+const defaultSection: JmsSection = 'home';
+const defaultLocale: JmsLocale = 'en-US';
+
+export default JsonMs<JmsObject, JmsLocale>(defaultJmsObject, defaultSection, defaultLocale)
 
 type JmsProviderSet = JSONmsProvider<JmsObject, JmsLocale, string>
 
@@ -39,8 +41,8 @@ export const useJsonMs = (): JmsProviderSet => {
   }
   return {
     data: ref(defaultJmsObject),
-    locale: ref('en-US'),
-    section: ref('home'),
+    section: ref(defaultSection),
+    locale: ref(defaultLocale),
   }
 }
 ```
@@ -64,6 +66,35 @@ export function registerPlugins (app: App) {
   app
     .use(jsonMs, jmsOptions)
 }
+```
+
+### Load in Nuxt
+
+Create a file `jsonms.plugin.ts` in your project:
+
+```ts
+import jsonMs from './jsonms'
+
+// (Optional) If you have `vue-router` and/or `vue-i18n` installed, 
+// you can pass them as parameter so JSON.ms will listen to 
+// any changes and behave accordingly.
+const jmsOptions = {
+  router,
+  i18n,
+}
+
+export default defineNuxtPlugin((nuxtApp) => {
+  const jmsProvider = JsonMs<JmsObject, JmsLocale>(defaultJmsObject);
+  nuxtApp.vueApp.use(jmsProvider, jmsOptions);
+});
+```
+
+Then add it to your `nuxt.config.ts`:
+
+```ts
+plugins: [
+  '~/plugins/jsonms.ts',
+],
 ```
 
 ### Usage in templates
