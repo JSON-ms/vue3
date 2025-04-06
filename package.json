@@ -1,6 +1,6 @@
 {
   "name": "@jsonms/vue3",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A minimalist Vue 3 plugin in TypeScript",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",

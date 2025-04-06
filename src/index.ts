@@ -1,19 +1,15 @@
 import {App, defineComponent, h, getCurrentInstance, ref, Ref, watch} from 'vue';
-import { useJsonMs } from '@jsonms/js'
-import {createI18n} from 'vue-i18n';
-import {createRouter} from 'vue-router';
+import { useJsonMs, JmsSection } from '@jsonms/js'
 
 export interface JSONmsProvider<O, S, L = string> {
   data: Ref<O>,
-  section: Ref<S>,
+  section: Ref<JmsSection<S>>,
   locale: Ref<L>,
 }
 
 export interface JSONmsOptions {
   filePath?: string;
   targetOrigin?: string;
-  i18n?: ReturnType<typeof createI18n>;
-  router?: ReturnType<typeof createRouter>;
 }
 
 export default <O, S, L = string>(
@@ -25,10 +21,13 @@ export default <O, S, L = string>(
   // Instantiate JsonMs
   const jsonMs = useJsonMs();
   const data = ref<O>(defaultJmsObject);
-  const section = ref<S>(defaultSection);
+  const section = ref<JmsSection<S>>({
+    name: defaultSection,
+    paths: [],
+  });
   const locale = ref<L>(defaultLocale);
-  jsonMs.bindToEditor({
-    onSectionChange: (value: string) => {
+  jsonMs.bindToEditor<S>({
+    onSectionChange: (value: JmsSection<S>) => {
       section.value = value;
     },
     onLocaleChange: (value: string) => {
@@ -48,7 +47,7 @@ export default <O, S, L = string>(
       app.provide<JSONmsProvider<O, S, L>>('jms', {
         data: data as Ref<O>,
         locale: locale as Ref<L>,
-        section: section as Ref<S>,
+        section: section as Ref<JmsSection<S>>,
       });
 
       // JmsItem Component
