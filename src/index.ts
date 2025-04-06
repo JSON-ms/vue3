@@ -108,28 +108,23 @@ export default <O, S, L = string>(
       }));
 
       // Listen to locale change
-      if (options?.i18n) {
-        let localeTimeout: any;
-        app.mixin({
-          watch: {
-            '$i18n.locale'(newLocale) {
-              clearTimeout(localeTimeout);
-              localeTimeout = setTimeout(() => {
-                window.parent.postMessage({name: 'jsonms', type: 'locale', data: newLocale}, targetOrigin);
-              });
-            }
-          }
-        });
-      }
-
-      // Listen to route change
-      if (options?.router) {
-        options.router.afterEach((to, from) => {
-          if (from.name) {
-            window.parent.postMessage({name: 'jsonms', type: 'route', data: to.name}, targetOrigin);
-          }
-        });
-      }
+      let localeTimeout: any;
+      app.mixin({
+        watch: {
+          '$i18n.locale'(newLocale) {
+            clearTimeout(localeTimeout);
+            localeTimeout = setTimeout(() => {
+              window.parent.postMessage({ name: 'jsonms', type: 'locale', data: newLocale }, targetOrigin);
+            });
+          },
+          '$route'(to) {
+            clearTimeout(localeTimeout);
+            localeTimeout = setTimeout(() => {
+              window.parent.postMessage({ name: 'jsonms', type: 'route', data: JSON.stringify(to) }, targetOrigin);
+            });
+          },
+        }
+      });
     }
   }
 }
