@@ -1,10 +1,15 @@
 import {App, defineComponent, h, getCurrentInstance, ref, Ref, watch} from 'vue';
-import { useJsonMs, JmsSection } from '@jsonms/js'
+import { useJsonMs, JmsSection, JmsSettings, defaultSettings } from '@jsonms/js'
+
+export {
+  defaultSettings
+}
 
 export interface JSONmsProvider<O, S, L = string> {
   data: Ref<O>,
   section: Ref<JmsSection<S>>,
   locale: Ref<L>,
+  settings: Ref<JmsSettings>,
 }
 
 export interface JSONmsOptions {
@@ -26,6 +31,7 @@ export default <O, S, L = string>(
     paths: [],
   });
   const locale = ref<L>(defaultLocale);
+  const settings = ref<JmsSettings>(defaultSettings);
   jsonMs.bindToEditor<S>({
     onSectionChange: (value: JmsSection<S>) => {
       section.value = value;
@@ -35,6 +41,9 @@ export default <O, S, L = string>(
     },
     onDataChange: (value: any) => {
       data.value = value.data;
+      locale.value = value.locale;
+      section.value = value.section;
+      settings.value = value.settings;
     }
   })
 
@@ -48,6 +57,7 @@ export default <O, S, L = string>(
         data: data as Ref<O>,
         locale: locale as Ref<L>,
         section: section as Ref<JmsSection<S>>,
+        settings: settings as Ref<JmsSettings>,
       });
 
       // JmsItem Component
