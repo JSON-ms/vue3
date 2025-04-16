@@ -12,6 +12,6 @@
     "outDir": "./dist",
     "declarationDir": "./dist/types" // Optional: specify where to put .d.ts files
   },
-  "include": ["src/**/*.ts", "src/**/*.vue"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }

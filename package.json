@@ -1,7 +1,7 @@
 {
   "name": "@jsonms/vue3",
-  "version": "1.0.4",
-  "description": "A minimalist Vue 3 plugin in TypeScript",
+  "version": "1.0.5",
+  "description": "A minimalist Vue 3 plugin written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "scripts": {
@@ -14,9 +14,6 @@
   },
   "devDependencies": {
     "typescript": "^4.5.0",
-    "vue": "^3.0.0"
-  },
-  "peerDependencies": {
     "vue": "^3.0.0"
   }
 }
