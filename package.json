@@ -1,6 +1,6 @@
 {
   "name": "@jsonms/vue3",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "A minimalist Vue 3 plugin for JSON.ms written in TypeScript",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
@@ -10,7 +10,7 @@
     "setup-hooks": "cp .pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
   },
   "dependencies": {
-    "@jsonms/js": "^1.0.0"
+    "@jsonms/js": "^1.0.7"
   },
   "devDependencies": {
     "typescript": "^4.5.0",
