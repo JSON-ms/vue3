@@ -18,33 +18,35 @@ or using yarn:
 yarn add @jsonms/vue3
 ```
 
-## Usage
+## Synchronize with JSON.ms
 
-Create a file `jsonms.ts` in `/src/plugins`. Make sure to export your typings from your JSON.ms project first (See Typings under your username in JSON.ms toolbar).
+1. Create a `/src/jms` folder.
+2. Go on https://json.ms, open and sync your project with this newly created folder. 
+
+## Connect with local project
+
+Create a file `jsonms.ts` in `/src/plugins`. Make sure you synced your blueprints from JSON.ms in your `/src/jms` folder first.
 
 ```ts
-import JsonMs, { type JSONmsProvider } from '@jsonms/vue3'
-import defaultJmsObject, { type JmsLocale, type JmsObject } from '@/interfaces'; // Your exported typings here
-import { inject } from 'vue';
+import { inject } from "vue";
+import { data, type JmsSectionKey, type JmsLocaleKey, type JmsData } from '@/jms';
+import JsonMs, { type JSONmsProvider } from '@jsonms/vue3';
 
-const defaultSection: JmsSection = 'home';
-const defaultLocale: JmsLocale = 'en-US';
+const provider = JsonMs<JmsData, JmsSectionKey, JmsLocaleKey>({
+  defaultData: data as unknown as JmsData,
+  defaultLocale: 'en-US',
+  defaultSection: { name: 'home', paths: [] },
+  
+  // Optional:
+  // defaultSettings: (settings: JmsSettings) => void, // Set the default settings.
+  // defaultStructure: (structure: JmsStructure) => void, // Set the default structure.
+})
 
-export default JsonMs<JmsObject, JmsLocale>(defaultJmsObject, defaultSection, defaultLocale)
-
-type JmsProviderSet = JSONmsProvider<JmsObject, JmsLocale, string>
-
-export const useJsonMs = (): JmsProviderSet => {
-  const jms = inject<JmsProviderSet>('jms');
-  if (jms) {
-    return jms;
-  }
-  return {
-    data: ref(defaultJmsObject),
-    section: ref(defaultSection),
-    locale: ref(defaultLocale),
-  }
+export function useJsonMs() {
+  return inject<JSONmsProvider<JmsData, JmsSectionKey, JmsLocaleKey>>('jms', provider.values);
 }
+
+export default provider;
 ```
 
 ### Load plugin
@@ -52,20 +54,24 @@ export const useJsonMs = (): JmsProviderSet => {
 In `/src/plugins/index.ts`, import `jsonMs` from the plugin directory and use it within your app.
 
 ```ts
+import type { App } from "vue";
 import jsonMs from './jsonms'
-
-// (Optional) If you have `vue-router` and/or `vue-i18n` installed, 
-// you can pass them as parameter so JSON.ms will listen to 
-// any changes and behave accordingly.
-const jmsOptions = {
-  router,
-  i18n,
-}
 
 export function registerPlugins (app: App) {
   app
-    .use(jsonMs, jmsOptions)
+    .use(jsonMs)
 }
+```
+
+Make sure you have `registerPlugins(app)` in `main.ts`. Example:
+
+```ts
+import { registerPlugins } from "@/plugins";
+
+const app = createApp(App)
+registerPlugins(app);
+
+app.mount('#app')
 ```
 
 ### Load in Nuxt
@@ -74,18 +80,11 @@ Create a file `jsonms.plugin.ts` in your project:
 
 ```ts
 import jsonMs from './jsonms'
-
-// (Optional) If you have `vue-router` and/or `vue-i18n` installed, 
-// you can pass them as parameter so JSON.ms will listen to 
-// any changes and behave accordingly.
-const jmsOptions = {
-  router,
-  i18n,
-}
+import { defaultData, type JmsSectionKey, type JmsLocaleKey, type JmsData } from '@/jms';
 
 export default defineNuxtPlugin((nuxtApp) => {
-  const jmsProvider = JsonMs<JmsObject, JmsLocale>(defaultJmsObject);
-  nuxtApp.vueApp.use(jmsProvider, jmsOptions);
+  const jmsProvider = JsonMs<JmsData, JmsSectionKey, JmsLocaleKey>(defaultData);
+  nuxtApp.vueApp.use(jmsProvider);
 });
 ```
 
@@ -94,7 +93,7 @@ Then add it to your `nuxt.config.ts`:
 ```ts
 plugins: [
   '~/plugins/jsonms.ts',
-],
+]
 ```
 
 ### Usage in templates
@@ -108,7 +107,13 @@ Now to use your data in your templates and see live updates, you need to import 
 </template>
 
 <script setup lang="ts">
-  import { useJsonMs } from '@/plugins/jsonms';
+  import { useJsonMs } from "@/plugins/jsonms";
   const { data, locale } = useJsonMs();
 </script>
 ```
+
+## Contributing
+Contributions are welcome! Please feel free to submit a pull request or open an issue.
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
