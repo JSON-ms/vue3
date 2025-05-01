@@ -1,63 +1,80 @@
-import {App, defineComponent, h, getCurrentInstance, ref, Ref, watch} from 'vue';
-import { useJsonMs, JmsSection, JmsSettings, defaultSettings } from '@jsonms/js'
+import { App, defineComponent, h, getCurrentInstance, ref, Ref, watch } from 'vue';
+import { useJsonMs, JmsSection, JmsSettings, JmsStructure, JmsOptionsWithDefaults, JmsFile, defaultSettings, defaultStructure, getFilePath } from '@jsonms/js'
 
 export {
-  defaultSettings
+  defaultSettings,
+  defaultStructure,
+  getFilePath,
+  type JmsSection,
+  type JmsSettings,
+  type JmsOptionsWithDefaults,
+  type JmsStructure,
+  type JmsFile,
 }
 
-export interface JSONmsProvider<O, S, L = string> {
-  data: Ref<O>,
+export interface JSONmsProvider<D, S, L> {
+  data: Ref<D>,
   section: Ref<JmsSection<S>>,
   locale: Ref<L>,
   settings: Ref<JmsSettings>,
+  structure: Ref<JmsStructure>,
+  getFilePath: (file: JmsFile | null, settings?: JmsSettings) => string,
 }
 
-export interface JSONmsOptions {
+export interface JmsOptions {
   filePath?: string;
   targetOrigin?: string;
 }
 
-export default <O, S, L = string>(
-  defaultJmsObject: O = {} as O,
-  defaultSection: S = 'home' as S,
-  defaultLocale: L = 'en-US' as L,
-) => {
+export default <D, S, L = string>(options: JmsOptionsWithDefaults<D, S, L>): {
+  name: string,
+  values: JSONmsProvider<D, S, L>,
+  install: (app: App, options?: JmsOptions) => void,
+} => {
+
+  // Prepare ref objects
+  const jsonMs = useJsonMs();
+  const data = ref<D>(options.defaultData);
+  const section = ref<JmsSection<S>>(options.defaultSection);
+  const locale = ref<L>(options.defaultLocale);
+  const settings = ref<JmsSettings>(options.defaultSettings ?? defaultSettings);
+  const structure = ref<JmsStructure>(options.defaultStructure ?? defaultStructure);
 
   // Instantiate JsonMs
-  const jsonMs = useJsonMs();
-  const data = ref<O>(defaultJmsObject);
-  const section = ref<JmsSection<S>>({
-    name: defaultSection,
-    paths: [],
-  });
-  const locale = ref<L>(defaultLocale);
-  const settings = ref<JmsSettings>(defaultSettings);
-  jsonMs.bindToEditor<S>({
-    onSectionChange: (value: JmsSection<S>) => {
-      section.value = value;
-    },
-    onLocaleChange: (value: string) => {
-      locale.value = value as L;
-    },
-    onDataChange: (value: any) => {
-      data.value = value.data;
-      locale.value = value.locale;
-      section.value = value.section;
-      settings.value = value.settings;
-    }
+  jsonMs.bindToEditor<D, S, L>({
+    onDataChange: value => data.value = value,
+    onSectionInit: value => section.value = value,
+    onLocaleInit: value => locale.value = value,
+    onSettingsInit: value => settings.value = value,
+    onStructureInit: value => structure.value = value,
+    onSectionChange: value => section.value = value,
+    onLocaleChange: value => locale.value = value,
+    onSettingsChange: value => settings.value = value,
+    onStructureChange: value => structure.value = value,
   })
 
   return {
-    install(app: App, options?: JSONmsOptions) {
+    name: 'JmsProvider',
+    values: {
+      data: data as Ref<D>,
+      section: section as Ref<JmsSection<S>>,
+      locale: locale as Ref<L>,
+      settings,
+      structure,
+      getFilePath: (file, innerSettings) => getFilePath(file, innerSettings ?? settings.value),
+    },
+    install(app: App, options?: JmsOptions) {
 
       const targetOrigin = options?.targetOrigin || '*';
 
       // Declare global jms property
-      app.provide<JSONmsProvider<O, S, L>>('jms', {
-        data: data as Ref<O>,
+      app.provide<JSONmsProvider<D, S, L>>('jms', {
+        data: data as Ref<D>,
         locale: locale as Ref<L>,
         section: section as Ref<JmsSection<S>>,
         settings: settings as Ref<JmsSettings>,
+        structure: structure as Ref<JmsStructure>,
+        getFilePath: (file, innerSettings) => getFilePath(file, innerSettings ?? settings.value),
       });
 
       // JmsItem Component
@@ -77,18 +94,18 @@ export default <O, S, L = string>(
           const nodes: Ref<any[]> = ref([]);
 
           const updateNodes = () => {
-            const jmsObject = props.modelValue.toString();
+            const jmsData = props.modelValue.toString();
             const tempNodes = [];
             const regex = /{(.*?)}/g;
             let lastIndex = 0;
             let match;
 
-            while ((match = regex.exec(jmsObject)) !== null) {
+            while ((match = regex.exec(jmsData)) !== null) {
               const key = match[1];
               const slotContent = instance?.slots[key];
 
               if (lastIndex < match.index) {
-                tempNodes.push(jmsObject.slice(lastIndex, match.index));
+                tempNodes.push(jmsData.slice(lastIndex, match.index));
               }
 
               if (slotContent) {
@@ -98,8 +115,8 @@ export default <O, S, L = string>(
               lastIndex = regex.lastIndex;
             }
 
-            if (lastIndex < jmsObject.length) {
-              tempNodes.push(jmsObject.slice(lastIndex));
+            if (lastIndex < jmsData.length) {
+              tempNodes.push(jmsData.slice(lastIndex));
             }
 
             nodes.value = tempNodes;
@@ -130,7 +147,10 @@ export default <O, S, L = string>(
           '$route'(to) {
             clearTimeout(localeTimeout);
             localeTimeout = setTimeout(() => {
-              window.parent.postMessage({ name: 'jsonms', type: 'route', data: JSON.stringify(to) }, targetOrigin);
+              window.parent.postMessage({ name: 'jsonms', type: 'route', data: JSON.stringify({
+                name: to.name,
+                path: to.path,
+              }) }, targetOrigin);
             });
           },
         }
